@@ -2,6 +2,9 @@
 *.d
 *bin
 *.bin
+./dwmblocks/dwmblocks
+./dwm/dwm
+
 
 
 # Object files
