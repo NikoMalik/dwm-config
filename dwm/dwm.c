@@ -1993,6 +1993,8 @@ int xerrorstart(Display *dpy, XErrorEvent *ee) {
 }
 
 void zoom(const Arg *arg) {
+    if (selmon->sel && selmon->sel->isfloating)
+        togglefloating(NULL);
     Client *c = selmon->sel;
 
     if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
