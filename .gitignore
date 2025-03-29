@@ -1,9 +1,7 @@
 # Prerequisites
 *.d
-*dwm
-*dwmblocks
-
 *bin
+*.bin
 
 
 # Object files
