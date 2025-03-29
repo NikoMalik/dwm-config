@@ -1,5 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 
+
+
+//TODO: systray
 /* appearance */
 #include <X11/X.h>
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
