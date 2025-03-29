@@ -286,8 +286,11 @@ static void grid(Monitor *m);
 static void nrowgrid(Monitor *m);
 static void spiral(Monitor *m);
 static void tile(Monitor *m);
+static void horizgrid(Monitor *m);
+
 /* Internals */
 static void getgaps(Monitor *m, int *oh, int *ov, int *ih, int *iv, unsigned int *nc);
+static void gaplessgrid(Monitor *m);
 static void getfacts(Monitor *m, int msize, int ssize, float *mf, float *sf, int *mr, int *sr);
 static void setgaps(int oh, int ov, int ih, int iv);
 

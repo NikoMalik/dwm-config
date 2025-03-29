@@ -2,8 +2,9 @@
 *.d
 *bin
 *.bin
-./dwmblocks/dwmblocks
-./dwm/dwm
+dwmblocks/dwmblocks
+dwm/dwm
+
 
 
 
