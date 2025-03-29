@@ -62,6 +62,7 @@
 ## Indentation Settings (Gaps) 📏
 
 - **MODKEY + Mod4 + u/i/o** - Increase outer, inner, and horizontal margins.
+or  modkey+ shift
 - **MODKEY + Mod4 + Shift + u/i/o** - Reduce outer, inner, and horizontal indents.
 - **MODKEY + Mod4 + 6/7/8/9** - Control different types of indents (internal/external).
 - **MODKEY + Mod4 + 0** - Enable/disable indents.
