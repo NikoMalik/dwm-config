@@ -44,6 +44,8 @@
 #include "drw.h"
 #include "util.h"
 
+#define OPAQUE 0xffU
+
 /* macros */
 #define BUTTONMASK (ButtonPressMask | ButtonReleaseMask)
 #define CLEANMASK(mask) (mask & ~(numlockmask | LockMask) & (ShiftMask | ControlMask | Mod1Mask | Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask))
@@ -263,6 +265,7 @@ static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
+static void xinitvisual();
 static void zoom(const Arg *arg);
 static void movestack(const Arg *arg);
 
@@ -332,6 +335,10 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static int useargb = 0;
+static Visual *visual;
+static int depth;
+static Colormap cmap;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -1691,7 +1698,9 @@ void setup(void) {
     sw = DisplayWidth(dpy, screen);
     sh = DisplayHeight(dpy, screen);
     root = RootWindow(dpy, screen);
-    drw = drw_create(dpy, screen, root, sw, sh);
+    // drw = drw_create(dpy, screen, root, sw, sh);
+    xinitvisual();
+    drw = drw_create(dpy, screen, root, sw, sh, visual, depth, cmap);
     if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
         die("no fonts could be loaded.");
     lrpad = drw->fonts->h;
@@ -1721,7 +1730,8 @@ void setup(void) {
     /* init appearance */
     scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
     for (i = 0; i < LENGTH(colors); i++)
-        scheme[i] = drw_scm_create(drw, colors[i], 3);
+        // scheme[i] = drw_scm_create(drw, colors[i], 3);
+        scheme[i] = drw_scm_create(drw, colors[i], alphas[i], 3);
     /* init bars */
     updatebars();
     updatestatus();
@@ -2694,19 +2704,59 @@ void updatebars(void) {
     Monitor *m;
     XSetWindowAttributes wa = {
         .override_redirect = True,
-        .background_pixmap = ParentRelative,
+        // .background_pixmap = ParentRelative,
+        .background_pixel = 0,
+        .border_pixel = 0,
+        .colormap = cmap,
         .event_mask = ButtonPressMask | ExposureMask};
     XClassHint ch = {"dwm", "dwm"};
     for (m = mons; m; m = m->next) {
         if (m->barwin)
             continue;
         // m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, DefaultDepth(dpy, screen),
-        m->barwin = XCreateWindow(dpy, root, m->wx + sp, m->by + vp, m->ww - 2 * sp, bh, 0, DefaultDepth(dpy, screen),
-                                  CopyFromParent, DefaultVisual(dpy, screen),
-                                  CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+        // m->barwin = XCreateWindow(dpy, root, m->wx + sp, m->by + vp, m->ww - 2 * sp, bh, 0, DefaultDepth(dpy, screen),
+        //                           CopyFromParent, DefaultVisual(dpy, screen),
+        //                           CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+        m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, depth,
+                                  +InputOutput, visual,
+                                  +CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWColormap | CWEventMask, &wa);
         XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
         XMapRaised(dpy, m->barwin);
         XSetClassHint(dpy, m->barwin, &ch);
+    }
+}
+
+void xinitvisual() {
+    XVisualInfo *infos;
+    XRenderPictFormat *fmt;
+    int nitems;
+    int i;
+
+    XVisualInfo tpl = {
+        .screen = screen,
+        .depth = 32,
+        .class = TrueColor};
+    long masks = VisualScreenMask | VisualDepthMask | VisualClassMask;
+
+    infos = XGetVisualInfo(dpy, masks, &tpl, &nitems);
+    visual = NULL;
+    for (i = 0; i < nitems; i++) {
+        fmt = XRenderFindVisualFormat(dpy, infos[i].visual);
+        if (fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
+            visual = infos[i].visual;
+            depth = infos[i].depth;
+            cmap = XCreateColormap(dpy, root, visual, AllocNone);
+            useargb = 1;
+            break;
+        }
+    }
+
+    XFree(infos);
+
+    if (!visual) {
+        visual = DefaultVisual(dpy, screen);
+        depth = DefaultDepth(dpy, screen);
+        cmap = DefaultColormap(dpy, screen);
     }
 }
 
