@@ -28,7 +28,7 @@ static const char *fonts[]          = {
 static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
 
 
-static const unsigned int baralpa = 0xd0;
+static const unsigned int  baralpha = 0xd0;
 static const unsigned int borderalpha = OPAQUE;
 
 static const char col_background[]  = "#181818";  /* background */
