@@ -14,10 +14,12 @@ static const unsigned int gappov    = 30;       /* vert outer gap between window
 static       int smartgaps          = 0;        /* 1 means no outer gap when there is only one window */
 
 
-static const unsigned int borderpx  = 1;        /* border pixel of windows */
-static const unsigned int snap      = 32;       /* snap pixel */
+static const unsigned int borderpx  = 2;        /* border pixel of windows */
+static const unsigned int snap      = 30;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
+static const int vertpad = 10 ; /* vertical padding of bar */
+static const int sidepad =10 ; /* horizontal padding of bar */
 static const char *fonts[]          = {
 	 "Maple Mono NF:size=12:style=Regular",
 	 "Font Awesome 6 Free Solid:size=12"
@@ -32,10 +34,23 @@ static const char col_accent[]      = "#f43841";  /* red accent */
 static const char col_yellow[]      = "#ffdd33";  /* yellow  */
 static const char col_green[]       = "#73c936";  /* green */
 
+
+static const char col_debkg[]       = "#1a1b26";
+static const char col_acbkg[]       = "#414868";
+static const char col_acfor[]       = "#c0caf5";
+static const char col_defor[]       = "#a9b1d6";
+static const char col_debor[]       = "#24283b";
+static const char col_acbor[]       = "#2ac3de";
+static const char col_sacbor[]      = "#74c7ec";
+static const char col_sdebor[]      = "#313244";
+
 static const char *colors[][3]      = {
     /*               fg             bg             border   */
-    [SchemeNorm] = { col_foreground, col_background, col_highlight },
-    [SchemeSel]  = { col_background, col_yellow,     col_foreground },
+    // [SchemeNorm] = { col_foreground, col_background, col_highlight },
+    // [SchemeSel]  = { col_background, col_yellow,     col_foreground },
+
+       [SchemeNorm] = { col_defor, col_debkg,  col_debor },
+	     [SchemeSel]  = { col_acfor, col_acbkg,  col_acbor  },
 };
 
 /* tagging */
@@ -63,9 +78,9 @@ static const Rule rules[] = {
 };
 
 /* layout(s) */
-static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
+static const float mfact     = 0.52; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
-static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
+static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
 
