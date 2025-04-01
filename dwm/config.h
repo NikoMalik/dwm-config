@@ -14,6 +14,10 @@ static const unsigned int gappov    = 30;       /* vert outer gap between window
 static       int smartgaps          = 0;        /* 1 means no outer gap when there is only one window */
 
 
+
+static const int user_bh = 2;
+
+
 static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 30;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
@@ -22,7 +26,8 @@ static const int vertpad = 10 ; /* vertical padding of bar */
 static const int sidepad =10 ; /* horizontal padding of bar */
 static const char *fonts[]          = {
 	 "Maple Mono NF:size=12:style=Regular",
-	 "Font Awesome 6 Free Solid:size=12"
+	 "Font Awesome 6 Free Solid:size=12",
+	 "Noto Sans:size=12"
 
 	  };
 static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
@@ -108,7 +113,6 @@ static const Layout layouts[] = {
 };
 
 
-#define SHCMD(cmd) { .v = (const char*[]) { "/bin/sh", "-c",cmd,NULL }           } 
 
 /* key definitions */
 #define MODKEY Mod1Mask
@@ -128,7 +132,7 @@ static const char *dmenucmd[] = {
     "-fn", dmenufont, 
     "-nb", col_background, 
     "-nf", col_foreground, 
-    "-sb", col_yellow, 
+    "-sb", col_acbkg, 
     "-sf", col_background, 
     NULL 
 };
