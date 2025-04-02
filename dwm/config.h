@@ -2,13 +2,6 @@
 
 
 
-//TODO: systray,smartgraps?
-//
-// *systray*
-static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
-static const unsigned int systrayspacing = 2;   /* systray spacing */
-static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
-static const int showsystray             = 1;   /* 0 means no systray */
 
 
 
@@ -42,8 +35,6 @@ static const char *fonts[]          = {
 static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
 
 
-static const unsigned int  baralpha = 0xd0;
-static const unsigned int borderalpha = OPAQUE;
 
 static const char col_background[]  = "#181818";  /* background */
 static const char col_foreground[]  = "#e4e4ef";  /* text */
@@ -71,11 +62,6 @@ static const char *colors[][3]      = {
 	     [SchemeSel]  = { col_foreground, col_acbkg,  col_acbor  },
 };
 
-static const unsigned int alphas[][3]      = {
-	/*               fg      bg        border     */
-	[SchemeNorm] = { OPAQUE, baralpha, borderalpha },
-	[SchemeSel]  = { OPAQUE, baralpha, borderalpha },
-};
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
