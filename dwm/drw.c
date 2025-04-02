@@ -58,8 +58,7 @@ static const unsigned char utf8_length[256] = {
 //     return len;
 // }
 
-static int
-utf8decode(const char *s_in, long *u, int *err) {
+static inline int utf8decode(const char *s_in, long *u, int *err) {
     const unsigned char *s = (const unsigned char *)s_in;
     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
     static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
