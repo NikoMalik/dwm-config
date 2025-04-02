@@ -21,41 +21,112 @@ static const unsigned char utf8_length[256] = {
     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+// static int
+// utf8decode(const char *s_in, long *u, int *err) {
+//     // static const unsigned char lens[] = {
+//     //     /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//     //     /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
+//     //     /* 110XX */ 2, 2, 2, 2,
+//     //     /* 1110X */ 3, 3,
+//     //     /* 11110 */ 4,
+//     //     /* 11111 */ 0, /* invalid */
+//     // };
+//     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
+//     static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
+
+//     const unsigned char *s = (const unsigned char *)s_in;
+//     // int len = lens[*s >> 3];
+//     //
+//     int len = utf8_length[(unsigned char)s[0]];
+//     *u = UTF_INVALID;
+//     *err = 1;
+//     if (len == 0)
+//         return 1;
+
+//     long cp = s[0] & leading_mask[len - 1];
+//     for (int i = 1; i < len; ++i) {
+//         if (s[i] == '\0' || (s[i] & 0xC0) != 0x80)
+//             return i;
+//         cp = (cp << 6) | (s[i] & 0x3F);
+//     }
+//     /* out of range, surrogate, overlong encoding */
+//     if (cp > 0x10FFFF || (cp >> 11) == 0x1B || cp < overlong[len - 1])
+//         return len;
+
+//     *err = 0;
+//     *u = cp;
+//     return len;
+// }
+
 static int
 utf8decode(const char *s_in, long *u, int *err) {
-    // static const unsigned char lens[] = {
-    //     /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    //     /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
-    //     /* 110XX */ 2, 2, 2, 2,
-    //     /* 1110X */ 3, 3,
-    //     /* 11110 */ 4,
-    //     /* 11111 */ 0, /* invalid */
-    // };
+    const unsigned char *s = (const unsigned char *)s_in;
     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
     static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
 
-    const unsigned char *s = (const unsigned char *)s_in;
-    // int len = lens[*s >> 3];
-    //
     int len = utf8_length[(unsigned char)s[0]];
     *u = UTF_INVALID;
     *err = 1;
-    if (len == 0)
+
+    if (len == 0) {
+        return 1;
+    }
+    long cp;
+
+    switch (len) {
+    case 1:
+        *u = s[0];
+        *err = 0;
         return 1;
 
-    long cp = s[0] & leading_mask[len - 1];
-    for (int i = 1; i < len; ++i) {
-        if (s[i] == '\0' || (s[i] & 0xC0) != 0x80)
-            return i;
-        cp = (cp << 6) | (s[i] & 0x3F);
-    }
-    /* out of range, surrogate, overlong encoding */
-    if (cp > 0x10FFFF || (cp >> 11) == 0x1B || cp < overlong[len - 1])
-        return len;
+    case 2:
+        if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
+            return 1;
+        }
+        cp = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
+        if (cp < 0x80) {
+            return 2;
+        }
+        *u = cp;
+        *err = 0;
+        return 2;
 
-    *err = 0;
-    *u = cp;
-    return len;
+    case 3:
+        if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
+            return 1;
+        }
+        if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
+            return 2;
+        }
+        cp = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+        if (cp < 0x800 || (cp >> 11) == 0x1B) {
+            return 3;
+        }
+        *u = cp;
+        *err = 0;
+        return 3;
+
+    case 4:
+        if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
+            return 1;
+        }
+        if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
+            return 2;
+        }
+        if (s[3] == '\0' || (s[3] & 0xC0) != 0x80) {
+            return 3;
+        }
+        cp = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+        if (cp < 0x10000 || cp > 0x10FFFF) {
+            return 4;
+        }
+        *u = cp;
+        *err = 0;
+        return 4;
+
+    default:
+        return 1;
+    }
 }
 
 Drw *drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h)
