@@ -9,6 +9,16 @@
 #include "drw.h"
 #include "util.h"
 
+#include <immintrin.h>
+
+void check_16_chars(Fnt *font, const long *codepoints, int *results) {
+    __m256i vec_cp = _mm256_loadu_si256((__m256i *)codepoints);
+
+    for (int i = 0; i < 16; i++) {
+        results[i] = XftCharExists(font->dpy, font->xfont, codepoints[i]);
+    }
+}
+
 #define UTF_INVALID 0xFFFD
 
 static const unsigned char utf8_length[256] = {
@@ -767,8 +777,7 @@ void drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h)
     XSync(drw->dpy, False);
 }
 
-unsigned int
-drw_fontset_getwidth(Drw *drw, const char *text) {
+unsigned int drw_fontset_getwidth(Drw *drw, const char *text) {
     if (!drw || !drw->fonts || !text)
         return 0;
     return drw_text(drw, 0, 0, 0, 0, 0, text, 0);

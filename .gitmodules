@@ -1,0 +1,3 @@
+[submodule "dwm/include/mimalloc"]
+	path = dwm/include/mimalloc
+	url = https://github.com/microsoft/mimalloc.git
