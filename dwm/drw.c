@@ -83,7 +83,7 @@ static inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long
     return _mm256_testz_si256(errors, errors);
 }
 
-static inline int utf8decode(const char *s_in, long *u, int *err) {
+static int utf8decode(const char *s_in, long *u, int *err) {
     static const unsigned char lens[] = {
         /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
@@ -793,10 +793,71 @@ void drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h)
     XSync(drw->dpy, False);
 }
 
+#define FONT_CACHE_SIZE 256
+
+typedef struct {
+    FcChar32 codepoint; // .UTF-8
+    Fnt *font;          // *font
+} FontCacheEntry;
+
+static FontCacheEntry font_cache[FONT_CACHE_SIZE] = {0};
+
+static Fnt *find_font_for_char(Drw *drw, FcChar32 codepoint) {
+    if (!drw || !drw->fonts) {
+        return NULL;
+    }
+    // check our trashbank
+    for (int i = 0; i < FONT_CACHE_SIZE; i++) {
+        if (font_cache[i].codepoint == codepoint && font_cache[i].font) {
+            return font_cache[i].font;
+        }
+    }
+
+    // find right font
+    for (Fnt *curfont = drw->fonts; curfont; curfont = curfont->next) {
+        if (XftCharExists(drw->dpy, curfont->xfont, codepoint)) {
+            // to cache
+            static int cache_index = 0;
+            font_cache[cache_index].codepoint = codepoint;
+            font_cache[cache_index].font = curfont;
+            cache_index = (cache_index + 1) % FONT_CACHE_SIZE;
+            return curfont;
+        }
+    }
+    return drw->fonts; // first font fallback bro
+}
+
+unsigned int drw_fontset_getwidth_fast(Drw *drw, const char *text) {
+    if (!drw || !drw->fonts || !text) {
+        return 0;
+    }
+
+    unsigned int width = 0;
+    long utf8codepoint;
+    int utf8err, utf8charlen;
+    Fnt *curfont;
+
+    while (*text) {
+        utf8charlen = utf8decode(text, &utf8codepoint, &utf8err);
+        if (utf8err) {
+            text += utf8charlen;
+            continue;
+        }
+
+        curfont = find_font_for_char(drw, utf8codepoint);
+        unsigned int char_width = 0;
+        drw_font_getexts(curfont, text, utf8charlen, &char_width, NULL);
+        width += char_width;
+        text += utf8charlen;
+    }
+
+    return width;
+}
+
 unsigned int drw_fontset_getwidth(Drw *drw, const char *text) {
     if (!drw || !drw->fonts || !text)
         return 0;
-    return drw_text(drw, 0, 0, 0, 0, 0, text, 0);
+    return drw_fontset_getwidth_fast(drw, text);
 }
 
 unsigned int

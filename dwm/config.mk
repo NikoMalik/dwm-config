@@ -48,7 +48,7 @@ LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}  -L${MIMALLOC_LIB} -lmi
 # flags
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS} ${MIMALLOCFLAGS} 
 #CFLAGS   = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
-CFLAGS   = -std=c99 -fno-plt -flto=auto   -march=native -Ofast -pedantic -Wall   ${INCS} ${CPPFLAGS} 
+CFLAGS   = -std=c99   -march=native -O3 -pedantic -Wall   ${INCS} ${CPPFLAGS}  -finline-functions -finline-small-functions
 LDFLAGS  = ${LIBS} -Wl,-rpath=${MIMALLOC_LIB} 
 
 # Solaris
