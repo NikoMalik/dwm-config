@@ -10,15 +10,14 @@
 #include "drw.h"
 #include "util.h"
 
-#include <immintrin.h>
+// #include <immintrin.h>
 
-void check_16_chars(Fnt *font, const long *codepoints, int *results) {
-    __m256i vec_cp = _mm256_loadu_si256((__m256i *)codepoints);
+// void check_16_chars(Fnt *font, const long *codepoints, int *results) { __m256i vec_cp = _mm256_loadu_si256((__m256i *)codepoints);
 
-    for (int i = 0; i < 16; i++) {
-        results[i] = XftCharExists(font->dpy, font->xfont, codepoints[i]);
-    }
-}
+//     for (int i = 0; i < 16; i++) {
+//         results[i] = XftCharExists(font->dpy, font->xfont, codepoints[i]);
+//     }
+// }
 
 #define UTF_INVALID 0xFFFD
 
@@ -32,23 +31,21 @@ void check_16_chars(Fnt *font, const long *codepoints, int *results) {
 //     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 //     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-// static int
-// utf8decode(const char *s_in, long *u, int *err) {
-//     // static const unsigned char lens[] = {
-//     //     /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-//     //     /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
-//     //     /* 110XX */ 2, 2, 2, 2,
-//     //     /* 1110X */ 3, 3,
-//     //     /* 11110 */ 4,
-//     //     /* 11111 */ 0, /* invalid */
-//     // };
+// static inline int utf8decode(const char *s_in, long *u, int *err) {
+//     static const unsigned char lens[] = {
+//         /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//         /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
+//         /* 110XX */ 2, 2, 2, 2,
+//         /* 1110X */ 3, 3,
+//         /* 11110 */ 4,
+//         /* 11111 */ 0, /* invalid */
+//     };
 //     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
 //     static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
 
 //     const unsigned char *s = (const unsigned char *)s_in;
-//     // int len = lens[*s >> 3];
-//     //
-//     int len = utf8_length[(unsigned char)s[0]];
+//     int len = lens[*s >> 3];
+
 //     *u = UTF_INVALID;
 //     *err = 1;
 //     if (len == 0)
@@ -68,17 +65,22 @@ void check_16_chars(Fnt *font, const long *codepoints, int *results) {
 //     *u = cp;
 //     return len;
 // }
-//
-static inline int utf8decode(const char *s_in, long *u, int *err) {
-    const unsigned char *s = (const unsigned char *)s_in;
-    static const char lengths[] = {
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
-    static const int masks[] = {0x7F, 0x1F, 0x0F, 0x07};
-    static const unsigned int mins[] = {0, 0x80, 0x800, 0x10000};
-    static const int shiftc[] = {0, 18, 12, 6};
 
-    int len = lengths[s[0] >> 3];
+static inline int utf8decode(const char *s_in, long *u, int *err) {
+    static const unsigned char lens[] = {
+        /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
+        /* 110XX */ 2, 2, 2, 2,
+        /* 1110X */ 3, 3,
+        /* 11110 */ 4,
+        /* 11111 */ 0, /* invalid */
+    };
+    static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
+    static const unsigned int overlong[] = {0x0, 0x80, 0x800, 0x10000};
+
+    const unsigned char *s = (const unsigned char *)s_in;
+    int len = lens[*s >> 3];
+
     *u = UTF_INVALID;
     *err = 1;
 
@@ -86,21 +88,18 @@ static inline int utf8decode(const char *s_in, long *u, int *err) {
         return 1;
     }
 
-    long cp = (s[0] & masks[len - 1]) << shiftc[len - 1];
-    for (int i = 1; i < len; i++) {
+    long cp = s[0] & leading_mask[len - 1];
+
+    for (int i = 1; i < len; ++i) {
         if (s[i] == '\0' || (s[i] & 0xC0) != 0x80) {
             return i;
         }
         cp = (cp << 6) | (s[i] & 0x3F);
     }
 
-    if (cp < mins[len - 1]) {
-        return len;
-    }
-    if (cp > 0x10FFFF) {
-        return len;
-    }
-    if (len == 3 && (cp >> 11) == 0x1B) {
+    if (cp > 0x10FFFF ||
+        (cp >= 0xD800 && cp <= 0xDFFF) ||
+        cp < overlong[len - 1]) {
         return len;
     }
 
@@ -108,7 +107,7 @@ static inline int utf8decode(const char *s_in, long *u, int *err) {
     *err = 0;
     return len;
 }
-
+//
 // static inline int utf8decode(const char *s_in, long *u, int *err) {
 //     const unsigned char *s = (const unsigned char *)s_in;
 //     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
