@@ -10,12 +10,11 @@
 
 #include <stdint.h>
 #include <x86intrin.h>
+#include <immintrin.h>
 
 #include "drw.h"
 #include "util.h"
 #define UTF_INVALID 0xFFFD
-
-#include <immintrin.h>
 
 #define UTF8_BATCH_SIZE 32
 
@@ -143,6 +142,76 @@ static inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long
 //     return len;
 // }
 
+typedef union {
+    __m256i v;
+    uint8_t b[32];
+    uint32_t u32[8];
+} simd_reg;
+
+static inline void utf8_avx2_decode(const uint8_t *src, uint32_t *codepoints, int *lengths) {
+    simd_reg input = {.v = _mm256_loadu_si256((const __m256i *)src)};
+
+    const __m256i len_mask = _mm256_setr_epi8(
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4);
+    simd_reg len = {.v = _mm256_shuffle_epi8(len_mask, _mm256_srli_epi16(input.v, 4))};
+
+    __m256i cont_mask = _mm256_set1_epi8(0xC0);
+    __m256i next1 = _mm256_alignr_epi8(input.v, input.v, 1);
+    __m256i next2 = _mm256_alignr_epi8(input.v, input.v, 2);
+    __m256i next3 = _mm256_alignr_epi8(input.v, input.v, 3);
+    __m256i cont_check = _mm256_and_si256(
+        _mm256_or_si256(
+            _mm256_or_si256(
+                _mm256_cmpeq_epi8(_mm256_and_si256(next1, cont_mask), _mm256_set1_epi8(0x80)),
+                _mm256_cmpeq_epi8(len.v, _mm256_set1_epi8(1))),
+            _mm256_or_si256(
+                _mm256_cmpeq_epi8(_mm256_and_si256(next2, cont_mask), _mm256_set1_epi8(0x80)),
+                _mm256_cmpeq_epi8(len.v, _mm256_set1_epi8(2)))),
+        _mm256_cmpeq_epi8(_mm256_and_si256(next3, cont_mask), _mm256_set1_epi8(0x80)));
+
+    __m256i mask1 = _mm256_set1_epi8(0x3F);
+    __m256i mask2 = _mm256_set1_epi8(0x1F);
+    __m256i mask3 = _mm256_set1_epi8(0x0F);
+    __m256i mask4 = _mm256_set1_epi8(0x07);
+
+    __m256i cp1 = input.v;
+    __m256i cp2 = _mm256_or_si256(
+        _mm256_slli_epi16(_mm256_and_si256(input.v, mask2), 6),
+        _mm256_and_si256(next1, mask1));
+    __m256i cp3 = _mm256_or_si256(
+        _mm256_slli_epi16(_mm256_and_si256(input.v, mask3), 12),
+        _mm256_or_si256(
+            _mm256_slli_epi16(_mm256_and_si256(next1, mask1), 6),
+            _mm256_and_si256(next2, mask1)));
+    __m256i cp4 = _mm256_or_si256(
+        _mm256_slli_epi16(_mm256_and_si256(input.v, mask4), 18),
+        _mm256_or_si256(
+            _mm256_slli_epi16(_mm256_and_si256(next1, mask1), 12),
+            _mm256_or_si256(
+                _mm256_slli_epi16(_mm256_and_si256(next2, mask1), 6),
+                _mm256_and_si256(next3, mask1))));
+
+    __m256i final_cp = _mm256_blendv_epi8(
+        _mm256_blendv_epi8(
+            _mm256_blendv_epi8(cp1, cp2, _mm256_cmpeq_epi8(len.v, _mm256_set1_epi8(2))),
+            cp3, _mm256_cmpeq_epi8(len.v, _mm256_set1_epi8(3))),
+        cp4, _mm256_cmpeq_epi8(len.v, _mm256_set1_epi8(4)));
+
+    // __m256i valid = _mm256_andnot_si256(
+    //     _mm256_or_si256(
+    //         _mm256_cmpgt_epi8(len.v, _mm256_set1_epi8(4)),
+    //         _mm256_or_si256(
+    //             _mm256_cmpgt_epi32(final_cp, _mm256_set1_epi32(0x10FFFF)),
+    //             _mm256_and_si256(
+    //                 _mm256_cmpgt_epi32(final_cp, _mm256_set1_epi32(0xD7FF)),
+    //                 _mm256_cmpgt_epi32(final_cp, _mm256_set1_epi32(0xE000))))),
+    //     _mm256_and_si256(cont_check, _mm256_set1_epi8(0xFF)));
+
+    _mm256_storeu_si256((__m256i *)codepoints, final_cp);
+    _mm256_storeu_si256((__m256i *)lengths, len.v);
+}
+
 static inline int utf8decode(const char *s_in, long *u, int *err) {
     const unsigned char *s = (const unsigned char *)s_in;
     unsigned char first_byte = s[0];
@@ -151,34 +220,27 @@ static inline int utf8decode(const char *s_in, long *u, int *err) {
     *u = UTF_INVALID;
     *err = 1;
 
-    if (first_byte <= 0x7F) {
-        len = 1; // ASCII
-    } else if (first_byte >= 0xC2 && first_byte <= 0xDF) {
-        len = 2; // 2
-    } else if (first_byte >= 0xE0 && first_byte <= 0xEF) {
-        len = 3; // 3
-    } else if (first_byte >= 0xF0 && first_byte <= 0xF4) {
-        len = 4; // 4
-    } else {
-        return 1; // error
+    if ((uintptr_t)s % 32 == 0) {
+        uint32_t codepoints[32];
+        int lengths[32];
+        utf8_avx2_decode(s, codepoints, lengths);
+
+        len = lengths[0];
+        if (len >= 1 && len <= 4) {
+            long cp = codepoints[0];
+            static const unsigned int overlong[] = {0x0, 0x80, 0x800, 0x10000};
+            if (cp <= 0x10FFFF && (cp < 0xD800 || cp > 0xDFFF) && cp >= overlong[len - 1]) {
+                *u = cp;
+                *err = 0;
+            }
+            return len;
+        }
     }
 
     for (int i = 1; i < len; i++) {
         if (s[i] == '\0' || s[i] < 0x80 || s[i] > 0xBF) {
             return i;
         }
-    }
-
-    if (len == 3) {
-        if (first_byte == 0xE0 && (s[1] < 0xA0 || s[1] > 0xBF))
-            return 1;
-        if (first_byte == 0xED && (s[1] < 0x80 || s[1] > 0x9F))
-            return 1;
-    } else if (len == 4) {
-        if (first_byte == 0xF0 && (s[1] < 0x90 || s[1] > 0xBF))
-            return 1;
-        if (first_byte == 0xF4 && (s[1] < 0x80 || s[1] > 0x8F))
-            return 1;
     }
 
     long cp = first_byte & (0xFF >> len);
