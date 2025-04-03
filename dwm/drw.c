@@ -22,15 +22,15 @@ void check_16_chars(Fnt *font, const long *codepoints, int *results) {
 
 #define UTF_INVALID 0xFFFD
 
-static const unsigned char utf8_length[256] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+// static const unsigned char utf8_length[256] = {
+//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+//     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // static int
 // utf8decode(const char *s_in, long *u, int *err) {
@@ -69,76 +69,115 @@ static const unsigned char utf8_length[256] = {
 //     return len;
 // }
 //
-
 static inline int utf8decode(const char *s_in, long *u, int *err) {
     const unsigned char *s = (const unsigned char *)s_in;
-    static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
-    static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
+    static const char lengths[] = {
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
+    static const int masks[] = {0x7F, 0x1F, 0x0F, 0x07};
+    static const unsigned int mins[] = {0, 0x80, 0x800, 0x10000};
+    static const int shiftc[] = {0, 18, 12, 6};
 
-    int len = utf8_length[(unsigned char)s[0]];
+    int len = lengths[s[0] >> 3];
     *u = UTF_INVALID;
     *err = 1;
 
-    if (len == 0) {
+    if (len == 0 || len > 4) {
         return 1;
     }
-    long cp;
 
-    switch (len) {
-    case 1:
-        *u = s[0];
-        *err = 0;
-        return 1;
-
-    case 2:
-        if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
-            return 1;
+    long cp = (s[0] & masks[len - 1]) << shiftc[len - 1];
+    for (int i = 1; i < len; i++) {
+        if (s[i] == '\0' || (s[i] & 0xC0) != 0x80) {
+            return i;
         }
-        cp = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
-        if (cp < 0x80) {
-            return 2;
-        }
-        *u = cp;
-        *err = 0;
-        return 2;
-
-    case 3:
-        if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
-            return 1;
-        }
-        if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
-            return 2;
-        }
-        cp = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
-        if (cp < 0x800 || (cp >> 11) == 0x1B) {
-            return 3;
-        }
-        *u = cp;
-        *err = 0;
-        return 3;
-
-    case 4:
-        if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
-            return 1;
-        }
-        if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
-            return 2;
-        }
-        if (s[3] == '\0' || (s[3] & 0xC0) != 0x80) {
-            return 3;
-        }
-        cp = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
-        if (cp < 0x10000 || cp > 0x10FFFF) {
-            return 4;
-        }
-        *u = cp;
-        *err = 0;
-        return 4;
-
-    default:
-        return 1;
+        cp = (cp << 6) | (s[i] & 0x3F);
     }
+
+    if (cp < mins[len - 1]) {
+        return len;
+    }
+    if (cp > 0x10FFFF) {
+        return len;
+    }
+    if (len == 3 && (cp >> 11) == 0x1B) {
+        return len;
+    }
+
+    *u = cp;
+    *err = 0;
+    return len;
 }
+
+// static inline int utf8decode(const char *s_in, long *u, int *err) {
+//     const unsigned char *s = (const unsigned char *)s_in;
+//     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
+//     static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
+
+//     int len = utf8_length[(unsigned char)s[0]];
+//     *u = UTF_INVALID;
+//     *err = 1;
+
+//     if (len == 0) {
+//         return 1;
+//     }
+//     long cp;
+
+//     switch (len) {
+//     case 1:
+//         *u = s[0];
+//         *err = 0;
+//         return 1;
+
+//     case 2:
+//         if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
+//             return 1;
+//         }
+//         cp = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
+//         if (cp < 0x80) {
+//             return 2;
+//         }
+//         *u = cp;
+//         *err = 0;
+//         return 2;
+
+//     case 3:
+//         if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
+//             return 1;
+//         }
+//         if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
+//             return 2;
+//         }
+//         cp = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+//         if (cp < 0x800 || (cp >> 11) == 0x1B) {
+//             return 3;
+//         }
+//         *u = cp;
+//         *err = 0;
+//         return 3;
+
+//     case 4:
+//         if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
+//             return 1;
+//         }
+//         if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
+//             return 2;
+//         }
+//         if (s[3] == '\0' || (s[3] & 0xC0) != 0x80) {
+//             return 3;
+//         }
+//         cp = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+//         if (cp < 0x10000 || cp > 0x10FFFF) {
+//             return 4;
+//         }
+//         *u = cp;
+//         *err = 0;
+//         return 4;
+
+//     default:
+//         return 1;
+//     }
+// }
 
 Drw *drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h)
 // drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h, Visual *visual, unsigned int depth, Colormap cmap)
