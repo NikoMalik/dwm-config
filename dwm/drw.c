@@ -10,27 +10,11 @@
 
 #include "drw.h"
 #include "util.h"
-
-// #include <immintrin.h>
-
-// void check_16_chars(Fnt *font, const long *codepoints, int *results) { __m256i vec_cp = _mm256_loadu_si256((__m256i *)codepoints);
-
-//     for (int i = 0; i < 16; i++) {
-//         results[i] = XftCharExists(font->dpy, font->xfont, codepoints[i]);
-//     }
-// }
-
 #define UTF_INVALID 0xFFFD
 
-// static const unsigned char utf8_length[256] = {
-//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-//     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#include <immintrin.h>
+
+#define UTF8_BATCH_SIZE 32
 
 // static inline int utf8decode(const char *s_in, long *u, int *err) {
 //     static const unsigned char lens[] = {
@@ -67,6 +51,24 @@
 //     return len;
 // }
 
+static inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long *cps) {
+    __m256i input = _mm256_loadu_si256((const __m256i *)s);
+
+    __m256i hi_nibbles = _mm256_srli_epi16(input, 4);
+    __m256i len_mask = _mm256_shuffle_epi8(_mm256_setr_epi8(
+                                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4,
+                                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4),
+                                           hi_nibbles);
+
+    __m256i cont_mask = _mm256_cmpgt_epi8(_mm256_set1_epi8(-0x41), input);
+    __m256i errors = _mm256_andnot_si256(cont_mask, len_mask);
+
+    _mm256_storeu_si256((__m256i *)lens, len_mask);
+    _mm256_storeu_si256((__m256i *)cps, errors);
+
+    return _mm256_testz_si256(errors, errors);
+}
+
 static inline int utf8decode(const char *s_in, long *u, int *err) {
     static const unsigned char lens[] = {
         /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -91,6 +93,19 @@ static inline int utf8decode(const char *s_in, long *u, int *err) {
 
     long cp = s[0] & leading_mask[len - 1];
 
+    // #ifdef __AVX2__
+    __attribute__((aligned(32))) static int batch_lens[UTF8_BATCH_SIZE];
+    __attribute__((aligned(32))) static long batch_cps[UTF8_BATCH_SIZE];
+
+    if ((uintptr_t)s % 32 == 0) {
+        if (utf8_decode_batch_avx2(s, batch_lens, batch_cps)) {
+            len = batch_lens[0];
+            cp = batch_cps[0];
+            goto decode_done;
+        }
+    }
+    // #endif
+
     for (int i = 1; i < len; ++i) {
         if (s[i] == '\0' || (s[i] & 0xC0) != 0x80) {
             return i;
@@ -103,9 +118,13 @@ static inline int utf8decode(const char *s_in, long *u, int *err) {
         cp < overlong[len - 1]) {
         return len;
     }
-
     *u = cp;
     *err = 0;
+    return len;
+
+decode_done:
+    *u = cp;
+    *err = (len == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF));
     return len;
 }
 //
