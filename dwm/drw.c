@@ -491,24 +491,11 @@ drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int
         XDrawRectangle(drw->dpy, drw->drawable, drw->gc, x, y, w - 1, h - 1);
 }
 
-#define CACHE_SIZE 65536
-static int char_exists_cache[CACHE_SIZE];
-static int cache_initialized = 0;
 
-void init_char_exists_cache(Fnt *font) {
-    if (!cache_initialized) {
-        for (int i = 0; i < CACHE_SIZE; i++) {
-            char_exists_cache[i] = XftCharExists(font->dpy, font->xfont, i);
-        }
-        cache_initialized = 1;
-    }
-}
 
 int drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lpad, const char *text, int invert) {
 
-    if (!cache_initialized) {
-        init_char_exists_cache(drw->fonts);
-    }
+
 
     int ty, ellipsis_x = 0;
 
@@ -590,7 +577,6 @@ int drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned in
         while (*text) {
 
             utf8charlen = utf8decode(text, &utf8codepoint, &utf8err);
-            charexists = (utf8codepoint < CACHE_SIZE) ? char_exists_cache[utf8codepoint] : XftCharExists(drw->dpy, usedfont->xfont, utf8codepoint);
 
             for (curfont = drw->fonts; curfont; curfont = curfont->next) {
 
