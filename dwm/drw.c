@@ -5,6 +5,7 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
+#include <stdint.h>
 
 #include "drw.h"
 #include "util.h"
@@ -67,6 +68,7 @@ static const unsigned char utf8_length[256] = {
 //     *u = cp;
 //     return len;
 // }
+//
 
 static inline int utf8decode(const char *s_in, long *u, int *err) {
     const unsigned char *s = (const unsigned char *)s_in;
@@ -264,15 +266,20 @@ xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
          * rectangles being drawn, at least with some fonts. */
 
         if (!(xfont = XftFontOpenName(drw->dpy, drw->screen, fontname))) {
+#ifdef __DEBUG__
 
             fprintf(stderr, "error, cannot load font from name: '%s'\n", fontname);
+#endif
 
             return NULL;
         }
 
         if (!(pattern = FcNameParse((FcChar8 *)fontname))) {
 
+#ifdef __DEBUG__
+
             fprintf(stderr, "error, cannot parse font name to pattern: '%s'\n", fontname);
+#endif
 
             XftFontClose(drw->dpy, xfont);
 
@@ -283,7 +290,11 @@ xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
 
         if (!(xfont = XftFontOpenPattern(drw->dpy, fontpattern))) {
 
+#ifdef __DEBUG__
+
             fprintf(stderr, "error, cannot load font from pattern.\n");
+
+#endif
 
             return NULL;
         }
@@ -304,41 +315,6 @@ xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
     font->dpy = drw->dpy;
 
     return font;
-    // Fnt *font;
-    // XftFont *xfont = NULL;
-    // FcPattern *pattern = NULL;
-
-    // if (fontname) {
-    //     /* Using the pattern found at font->xfont->pattern does not yield the
-    //      * same substitution results as using the pattern returned by
-    //      * FcNameParse; using the latter results in the desired fallback
-    //      * behaviour whereas the former just results in missing-character
-    //      * rectangles being drawn, at least with some fonts. */
-    //     if (!(xfont = XftFontOpenName(drw->dpy, drw->screen, fontname))) {
-    //         fprintf(stderr, "error, cannot load font from name: '%s'\n", fontname);
-    //         return NULL;
-    //     }
-    //     if (!(pattern = FcNameParse((FcChar8 *)fontname))) {
-    //         fprintf(stderr, "error, cannot parse font name to pattern: '%s'\n", fontname);
-    //         XftFontClose(drw->dpy, xfont);
-    //         return NULL;
-    //     }
-    // } else if (fontpattern) {
-    //     if (!(xfont = XftFontOpenPattern(drw->dpy, fontpattern))) {
-    //         fprintf(stderr, "error, cannot load font from pattern.\n");
-    //         return NULL;
-    //     }
-    // } else {
-    //     die("no font specified.");
-    // }
-
-    // font = ecalloc(1, sizeof(Fnt));
-    // font->xfont = xfont;
-    // font->pattern = pattern;
-    // font->h = xfont->ascent + xfont->descent;
-    // font->dpy = drw->dpy;
-
-    // return font;
 }
 
 static void
@@ -491,11 +467,7 @@ drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int
         XDrawRectangle(drw->dpy, drw->drawable, drw->gc, x, y, w - 1, h - 1);
 }
 
-
-
 int drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lpad, const char *text, int invert) {
-
-
 
     int ty, ellipsis_x = 0;
 
