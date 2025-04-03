@@ -6,6 +6,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
 #include <stdint.h>
+#include "mimalloc.h"
 
 #include "drw.h"
 #include "util.h"
@@ -202,37 +203,7 @@ Drw *drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned 
     XSetLineAttributes(dpy, drw->gc, 1, LineSolid, CapButt, JoinMiter);
 
     return drw;
-    //    Drw *drw = ecalloc(1, sizeof(Drw));
-
-    //    drw->dpy = dpy;
-    //    drw->screen = screen;
-    //    drw->root = root;
-    //    drw->w = w;
-    //    drw->h = h;
-    //    // drw->drawable = XCreatePixmap(dpy, root, w, h, DefaultDepth(dpy, screen));
-    //    // drw->gc = XCreateGC(dpy, root, 0, NULL);
-
-    //    drw->visual = visual;
-    //    drw->depth = depth;
-    //    drw->cmap = cmap;
-    //    drw->drawable = XCreatePixmap(dpy, root, w, h, depth);
-    //    drw->gc = XCreateGC(dpy, drw->drawable, 0, NULL);
-    //    XSetLineAttributes(dpy, drw->gc, 1, LineSolid, CapButt, JoinMiter);
-
-    //    return drw;
 }
-
-// void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
-//     if (!drw)
-//         return;
-
-//     drw->w = w;
-//     drw->h = h;
-//     if (drw->drawable)
-//         XFreePixmap(drw->dpy, drw->drawable);
-//     // drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, DefaultDepth(drw->dpy, drw->screen));
-//     drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, drw->depth);
-// }
 
 void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
 
@@ -251,16 +222,7 @@ void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
     drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, DefaultDepth(drw->dpy, drw->screen));
 }
 
-// void drw_free(Drw *drw) {
-//     XFreePixmap(drw->dpy, drw->drawable);
-//     XFreeGC(drw->dpy, drw->gc);
-//     drw_fontset_free(drw->fonts);
-//     free(drw);
-// }
-
-void
-
-drw_free(Drw *drw)
+void drw_free(Drw *drw)
 
 {
 
@@ -270,7 +232,7 @@ drw_free(Drw *drw)
 
     drw_fontset_free(drw->fonts);
 
-    free(drw);
+    mi_free(drw);
 }
 
 /* This function is an implementation detail. Library users should use
@@ -378,7 +340,7 @@ xfont_free(Fnt *font)
 
     XftFontClose(font->dpy, font->xfont);
 
-    free(font);
+    mi_free(font);
 }
 
 // Fnt *drw_fontset_create(Drw *drw, const char *fonts[], size_t fontcount) {
@@ -830,5 +792,5 @@ void drw_cur_free(Drw *drw, Cur *cursor) {
         return;
 
     XFreeCursor(drw->dpy, cursor->cursor);
-    free(cursor);
+    mi_free(cursor);
 }

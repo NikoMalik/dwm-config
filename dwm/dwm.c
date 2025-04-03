@@ -44,6 +44,7 @@
 
 #include "drw.h"
 #include "util.h"
+#include "mimalloc.h"
 
 /* macros */
 #define BUTTONMASK (ButtonPressMask | ButtonReleaseMask)
@@ -623,8 +624,8 @@ void cleanup(void) {
         drw_cur_free(drw, cursor[i]);
     for (i = 0; i < LENGTH(colors); i++)
 
-        free(scheme[i]);
-    free(scheme);
+        mi_free(scheme[i]);
+    mi_free(scheme);
     XDestroyWindow(dpy, wmcheckwin);
     drw_free(drw);
     XSync(dpy, False);
@@ -644,7 +645,7 @@ void cleanupmon(Monitor *mon) {
     }
     XUnmapWindow(dpy, mon->barwin);
     XDestroyWindow(dpy, mon->barwin);
-    free(mon);
+    mi_free(mon);
 }
 
 void clientmessage(XEvent *e) {
@@ -2724,7 +2725,7 @@ void unmanage(Client *c, int destroyed) {
         XSetErrorHandler(xerror);
         XUngrabServer(dpy);
     }
-    free(c);
+    mi_free(c);
     focus(NULL);
     updateclientlist();
     arrange(m);
@@ -2845,7 +2846,7 @@ int updategeom(void) {
                 selmon = mons;
             cleanupmon(m);
         }
-        free(unique);
+        mi_free(unique);
     } else
 #endif /* XINERAMA */
     {  /* default monitor setup */
