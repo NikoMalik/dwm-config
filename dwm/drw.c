@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include "mimalloc.h"
 
+#include <stdint.h>
+#include <x86intrin.h>
+
 #include "drw.h"
 #include "util.h"
 #define UTF_INVALID 0xFFFD
@@ -51,6 +54,18 @@
 //     return len;
 // }
 
+static inline __m256i push_last_byte_of_a_to_b(__m256i a, __m256i b) {
+    return _mm256_alignr_epi8(b, _mm256_permute2x128_si256(a, b, 0x21), 15);
+}
+
+static inline __m256i push_last_2bytes_of_a_to_b(__m256i a, __m256i b) {
+    return _mm256_alignr_epi8(b, _mm256_permute2x128_si256(a, b, 0x21), 14);
+}
+
+static inline __m256i push_last_3bytes_of_a_to_b(__m256i a, __m256i b) {
+    return _mm256_alignr_epi8(b, _mm256_permute2x128_si256(a, b, 0x21), 13);
+}
+
 static inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long *cps) {
     __m256i input = _mm256_loadu_si256((const __m256i *)s);
 
@@ -69,134 +84,117 @@ static inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long
     return _mm256_testz_si256(errors, errors);
 }
 
-static inline int utf8decode(const char *s_in, long *u, int *err) {
-    static const unsigned char lens[] = {
-        /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
-        /* 110XX */ 2, 2, 2, 2,
-        /* 1110X */ 3, 3,
-        /* 11110 */ 4,
-        /* 11111 */ 0, /* invalid */
-    };
-    static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
-    static const unsigned int overlong[] = {0x0, 0x80, 0x800, 0x10000};
+// static inline int utf8decode(const char *s_in, long *u, int *err) {
+//     static const unsigned char lens[] = {
+//         /* 0XXXX */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//         /* 10XXX */ 0, 0, 0, 0, 0, 0, 0, 0, /* invalid */
+//         /* 110XX */ 2, 2, 2, 2,
+//         /* 1110X */ 3, 3,
+//         /* 11110 */ 4,
+//         /* 11111 */ 0, /* invalid */
+//     };
+//     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
+//     static const unsigned int overlong[] = {0x0, 0x80, 0x800, 0x10000};
 
+//     const unsigned char *s = (const unsigned char *)s_in;
+//     int len = lens[*s >> 3];
+
+//     *u = UTF_INVALID;
+//     *err = 1;
+
+//     if (len == 0 || len > 4) {
+//         return 1;
+//     }
+
+//     long cp = s[0] & leading_mask[len - 1];
+
+//     // #ifdef __AVX2__
+//     __attribute__((aligned(32))) static int batch_lens[UTF8_BATCH_SIZE];
+//     __attribute__((aligned(32))) static long batch_cps[UTF8_BATCH_SIZE];
+
+//     if ((uintptr_t)s % 32 == 0) {
+//         if (utf8_decode_batch_avx2(s, batch_lens, batch_cps)) {
+//             len = batch_lens[0];
+//             cp = batch_cps[0];
+//             goto decode_done;
+//         }
+//     }
+//     // #endif
+
+//     for (int i = 1; i < len; ++i) {
+//         if (s[i] == '\0' || (s[i] & 0xC0) != 0x80) {
+//             return i;
+//         }
+//         cp = (cp << 6) | (s[i] & 0x3F);
+//     }
+
+//     if (cp > 0x10FFFF ||
+//         (cp >= 0xD800 && cp <= 0xDFFF) ||
+//         cp < overlong[len - 1]) {
+//         return len;
+//     }
+//     *u = cp;
+//     *err = 0;
+//     return len;
+
+// decode_done:
+//     *u = cp;
+//     *err = (len == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF));
+//     return len;
+// }
+
+static inline int utf8decode(const char *s_in, long *u, int *err) {
     const unsigned char *s = (const unsigned char *)s_in;
-    int len = lens[*s >> 3];
+    unsigned char first_byte = s[0];
+    int len;
 
     *u = UTF_INVALID;
     *err = 1;
 
-    if (len == 0 || len > 4) {
-        return 1;
+    if (first_byte <= 0x7F) {
+        len = 1; // ASCII
+    } else if (first_byte >= 0xC2 && first_byte <= 0xDF) {
+        len = 2; // 2
+    } else if (first_byte >= 0xE0 && first_byte <= 0xEF) {
+        len = 3; // 3
+    } else if (first_byte >= 0xF0 && first_byte <= 0xF4) {
+        len = 4; // 4
+    } else {
+        return 1; // error
     }
 
-    long cp = s[0] & leading_mask[len - 1];
-
-    // #ifdef __AVX2__
-    __attribute__((aligned(32))) static int batch_lens[UTF8_BATCH_SIZE];
-    __attribute__((aligned(32))) static long batch_cps[UTF8_BATCH_SIZE];
-
-    if ((uintptr_t)s % 32 == 0) {
-        if (utf8_decode_batch_avx2(s, batch_lens, batch_cps)) {
-            len = batch_lens[0];
-            cp = batch_cps[0];
-            goto decode_done;
-        }
-    }
-    // #endif
-
-    for (int i = 1; i < len; ++i) {
-        if (s[i] == '\0' || (s[i] & 0xC0) != 0x80) {
+    for (int i = 1; i < len; i++) {
+        if (s[i] == '\0' || s[i] < 0x80 || s[i] > 0xBF) {
             return i;
         }
+    }
+
+    if (len == 3) {
+        if (first_byte == 0xE0 && (s[1] < 0xA0 || s[1] > 0xBF))
+            return 1;
+        if (first_byte == 0xED && (s[1] < 0x80 || s[1] > 0x9F))
+            return 1;
+    } else if (len == 4) {
+        if (first_byte == 0xF0 && (s[1] < 0x90 || s[1] > 0xBF))
+            return 1;
+        if (first_byte == 0xF4 && (s[1] < 0x80 || s[1] > 0x8F))
+            return 1;
+    }
+
+    long cp = first_byte & (0xFF >> len);
+    for (int i = 1; i < len; i++) {
         cp = (cp << 6) | (s[i] & 0x3F);
     }
 
-    if (cp > 0x10FFFF ||
-        (cp >= 0xD800 && cp <= 0xDFFF) ||
-        cp < overlong[len - 1]) {
+    static const unsigned int overlong[] = {0x0, 0x80, 0x800, 0x10000};
+    if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF) || cp < overlong[len - 1]) {
         return len;
     }
+
     *u = cp;
     *err = 0;
     return len;
-
-decode_done:
-    *u = cp;
-    *err = (len == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF));
-    return len;
 }
-//
-// static inline int utf8decode(const char *s_in, long *u, int *err) {
-//     const unsigned char *s = (const unsigned char *)s_in;
-//     static const unsigned char leading_mask[] = {0x7F, 0x1F, 0x0F, 0x07};
-//     static const unsigned int overlong[] = {0x0, 0x80, 0x0800, 0x10000};
-
-//     int len = utf8_length[(unsigned char)s[0]];
-//     *u = UTF_INVALID;
-//     *err = 1;
-
-//     if (len == 0) {
-//         return 1;
-//     }
-//     long cp;
-
-//     switch (len) {
-//     case 1:
-//         *u = s[0];
-//         *err = 0;
-//         return 1;
-
-//     case 2:
-//         if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
-//             return 1;
-//         }
-//         cp = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
-//         if (cp < 0x80) {
-//             return 2;
-//         }
-//         *u = cp;
-//         *err = 0;
-//         return 2;
-
-//     case 3:
-//         if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
-//             return 1;
-//         }
-//         if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
-//             return 2;
-//         }
-//         cp = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
-//         if (cp < 0x800 || (cp >> 11) == 0x1B) {
-//             return 3;
-//         }
-//         *u = cp;
-//         *err = 0;
-//         return 3;
-
-//     case 4:
-//         if (s[1] == '\0' || (s[1] & 0xC0) != 0x80) {
-//             return 1;
-//         }
-//         if (s[2] == '\0' || (s[2] & 0xC0) != 0x80) {
-//             return 2;
-//         }
-//         if (s[3] == '\0' || (s[3] & 0xC0) != 0x80) {
-//             return 3;
-//         }
-//         cp = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
-//         if (cp < 0x10000 || cp > 0x10FFFF) {
-//             return 4;
-//         }
-//         *u = cp;
-//         *err = 0;
-//         return 4;
-
-//     default:
-//         return 1;
-//     }
-// }
 
 Drw *drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h)
 // drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h, Visual *visual, unsigned int depth, Colormap cmap)
