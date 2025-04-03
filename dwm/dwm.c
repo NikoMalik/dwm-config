@@ -33,6 +33,8 @@
 #include <sys/wait.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
+
+#include <X11/XKBlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xproto.h>
@@ -1135,16 +1137,43 @@ isuniquegeom(XineramaScreenInfo *unique, size_t n, XineramaScreenInfo *info) {
 }
 #endif /* XINERAMA */
 
+// {
+//     int keysyms_per_keycode_return;
+//     KeySym *keysym = XGetKeyboardMapping(dpy,
+//                                          xe->xkey.keycode,
+//                                          1,
+//                                          &keysyms_per_keycode_return);
+
+//     /* do something with keysym[0] */
+
+//     XFree(keysym);
+// }
+
+// void keypress(XEvent *e) {
+//     unsigned int i;
+//     KeySym keysym;
+//     XKeyEvent *ev;
+
+//     ev = &e->xkey;
+
+//     keysym = XKeycodeToKeysym(dpy, (KeyCode)ev->keycode, 0);
+//     XkbLookupKeySym(dpy, ev->keycode, 0, NULL, &keysym);
+//     for (i = 0; i < LENGTH(keys); i++)
+//         if (keysym == keys[i].keysym && CLEANMASK(keys[i].mod) == CLEANMASK(ev->state) && keys[i].func)
+//             keys[i].func(&(keys[i].arg));
+// }
+
 void keypress(XEvent *e) {
     unsigned int i;
-    KeySym keysym;
+    int keysyms_return;
+    KeySym *keysym;
     XKeyEvent *ev;
-
     ev = &e->xkey;
-    keysym = XKeycodeToKeysym(dpy, (KeyCode)ev->keycode, 0);
+    keysym = XGetKeyboardMapping(dpy, (KeyCode)ev->keycode, 1, &keysyms_return);
     for (i = 0; i < LENGTH(keys); i++)
-        if (keysym == keys[i].keysym && CLEANMASK(keys[i].mod) == CLEANMASK(ev->state) && keys[i].func)
+        if (*keysym == keys[i].keysym && CLEANMASK(keys[i].mod) == CLEANMASK(ev->state) && keys[i].func)
             keys[i].func(&(keys[i].arg));
+    XFree(keysym);
 }
 
 void killclient(const Arg *arg) {

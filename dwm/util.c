@@ -26,7 +26,6 @@ void die(const char *fmt, ...) {
     exit(1);
 }
 
-// try to add  mimalloc
 void *ecalloc(size_t nmemb, size_t size) {
     void *p;
 
