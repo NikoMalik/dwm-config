@@ -49,7 +49,7 @@ FREETYPEINC = /usr/include/freetype2
 #MANPREFIX = ${PREFIX}/man
 
 # includes and libs
-INCS = -I${X11INC} -I${FREETYPEINC} -I${MIMALLOC_INC}
+INCS = -I${X11INC} -I${FREETYPEINC} -I${JEMALLOC_INC}
 LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}  -L${JEMALLOC_LIB} -ljemalloc
 # -L${MIMALLOC_LIB} -lmimalloc
 
