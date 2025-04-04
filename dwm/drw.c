@@ -6,7 +6,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
 #include <stdint.h>
-#include "mimalloc.h"
 
 #include <stdint.h>
 #include <x86intrin.h>
@@ -248,24 +247,6 @@ Drw *drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned 
 
     return drw;
 }
-
-void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
-
-    if (!drw)
-
-        return;
-
-    drw->w = w;
-
-    drw->h = h;
-
-    if (drw->drawable)
-
-        XFreePixmap(drw->dpy, drw->drawable);
-
-    drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, DefaultDepth(drw->dpy, drw->screen));
-}
-
 void drw_free(Drw *drw)
 
 {
@@ -276,7 +257,7 @@ void drw_free(Drw *drw)
 
     drw_fontset_free(drw->fonts);
 
-    mi_free(drw);
+    free(drw);
 }
 
 /* This function is an implementation detail. Library users should use
@@ -384,7 +365,7 @@ xfont_free(Fnt *font)
 
     XftFontClose(font->dpy, font->xfont);
 
-    mi_free(font);
+    free(font);
 }
 
 // Fnt *drw_fontset_create(Drw *drw, const char *fonts[], size_t fontcount) {
@@ -478,11 +459,6 @@ drw_scm_create(Drw *drw, const char *clrnames[], size_t clrcount)
         drw_clr_create(drw, &ret[i], clrnames[i]);
 
     return ret;
-}
-
-void drw_setfontset(Drw *drw, Fnt *set) {
-    if (drw)
-        drw->fonts = set;
 }
 
 void drw_setscheme(Drw *drw, Clr *scm) {
@@ -802,6 +778,35 @@ typedef struct {
 
 static FontCacheEntry font_cache[FONT_CACHE_SIZE] = {0};
 
+static void reset_font_cache(void) {
+    memset(font_cache, 0, sizeof(font_cache));
+}
+
+void drw_setfontset(Drw *drw, Fnt *set) {
+    if (drw) {
+        drw->fonts = set;
+        reset_font_cache();
+    }
+}
+
+void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
+
+    if (!drw)
+
+        return;
+
+    drw->w = w;
+
+    drw->h = h;
+
+    if (drw->drawable)
+
+        XFreePixmap(drw->dpy, drw->drawable);
+
+    drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, DefaultDepth(drw->dpy, drw->screen));
+    reset_font_cache();
+}
+
 static Fnt *find_font_for_char(Drw *drw, FcChar32 codepoint) {
     if (!drw || !drw->fonts) {
         return NULL;
@@ -897,5 +902,5 @@ void drw_cur_free(Drw *drw, Cur *cursor) {
         return;
 
     XFreeCursor(drw->dpy, cursor->cursor);
-    mi_free(cursor);
+    free(cursor);
 }

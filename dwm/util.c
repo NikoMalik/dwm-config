@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mimalloc.h"
-
 #include "util.h"
 
 void die(const char *fmt, ...) {
@@ -29,7 +27,7 @@ void die(const char *fmt, ...) {
 void *ecalloc(size_t nmemb, size_t size) {
     void *p;
 
-    if (!(p = mi_calloc(nmemb, size)))
+    if (!(p = calloc(nmemb, size)))
         die("calloc:");
     return p;
 }

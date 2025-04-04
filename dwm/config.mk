@@ -10,8 +10,15 @@ MANPREFIX = ${PREFIX}/share/man
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
 
-MIMALLOC_INC = ./include/mimalloc/include 
+MIMALLOC_INC = ./include/mimalloc/include
 MIMALLOC_LIB = ./include/mimalloc/out/release
+
+
+
+
+
+JEMALLOC_LIB = ./include/jemalloc/lib/libjemalloc.so
+JEMALLOC_INC = ./include/jemalloc/include
 
 
 # Xinerama, comment if you don't want it
@@ -43,13 +50,15 @@ FREETYPEINC = /usr/include/freetype2
 
 # includes and libs
 INCS = -I${X11INC} -I${FREETYPEINC} -I${MIMALLOC_INC}
-LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}  -L${MIMALLOC_LIB} -lmimalloc
+LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}  -L${JEMALLOC_LIB} -ljemalloc
+# -L${MIMALLOC_LIB} -lmimalloc
 
 # flags
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS} ${MIMALLOCFLAGS} 
 #CFLAGS   = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
 CFLAGS   = -std=c99   -march=native -O3 -pedantic -Wall   ${INCS} ${CPPFLAGS}  -finline-functions -finline-small-functions
-LDFLAGS  = ${LIBS} -Wl,-rpath=${MIMALLOC_LIB} 
+LDFLAGS  = ${LIBS}
+# -rpath=${MIMALLOC_LIB}
 
 # Solaris
 #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"

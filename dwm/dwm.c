@@ -626,8 +626,8 @@ void cleanup(void) {
         drw_cur_free(drw, cursor[i]);
     for (i = 0; i < LENGTH(colors); i++)
 
-        mi_free(scheme[i]);
-    mi_free(scheme);
+        free(scheme[i]);
+    free(scheme);
     XDestroyWindow(dpy, wmcheckwin);
     drw_free(drw);
     XSync(dpy, False);
@@ -647,7 +647,7 @@ void cleanupmon(Monitor *mon) {
     }
     XUnmapWindow(dpy, mon->barwin);
     XDestroyWindow(dpy, mon->barwin);
-    mi_free(mon);
+    free(mon);
 }
 
 void clientmessage(XEvent *e) {
@@ -2754,7 +2754,7 @@ void unmanage(Client *c, int destroyed) {
         XSetErrorHandler(xerror);
         XUngrabServer(dpy);
     }
-    mi_free(c);
+    free(c);
     focus(NULL);
     updateclientlist();
     arrange(m);
@@ -2875,7 +2875,7 @@ int updategeom(void) {
                 selmon = mons;
             cleanupmon(m);
         }
-        mi_free(unique);
+        free(unique);
     } else
 #endif /* XINERAMA */
     {  /* default monitor setup */

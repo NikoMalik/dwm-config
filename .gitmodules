@@ -1,3 +1,6 @@
 [submodule "dwm/include/mimalloc"]
 	path = dwm/include/mimalloc
 	url = https://github.com/microsoft/mimalloc.git
+[submodule "dwm/include/jemalloc"]
+	path = dwm/include/jemalloc
+	url = https://github.com/jemalloc/jemalloc.git
