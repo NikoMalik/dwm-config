@@ -789,20 +789,31 @@ void drw_setfontset(Drw *drw, Fnt *set) {
     }
 }
 
+// void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
+
+//     if (!drw)
+
+//         return;
+
+//     drw->w = w;
+
+//     drw->h = h;
+
+//     if (drw->drawable)
+
+//         XFreePixmap(drw->dpy, drw->drawable);
+
+//     drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, DefaultDepth(drw->dpy, drw->screen));
+//     reset_font_cache();
+// }
+
 void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
-
-    if (!drw)
-
+    if (!drw || (drw->w == w && drw->h == h))
         return;
-
     drw->w = w;
-
     drw->h = h;
-
     if (drw->drawable)
-
         XFreePixmap(drw->dpy, drw->drawable);
-
     drw->drawable = XCreatePixmap(drw->dpy, drw->root, w, h, DefaultDepth(drw->dpy, drw->screen));
     reset_font_cache();
 }
@@ -873,7 +884,7 @@ drw_fontset_getwidth_clamp(Drw *drw, const char *text, unsigned int n) {
     return MIN(n, tmp);
 }
 
-void drw_font_getexts(Fnt *font, const char *text, unsigned int len, unsigned int *w, unsigned int *h) {
+void inline drw_font_getexts(Fnt *font, const char *text, unsigned int len, unsigned int *w, unsigned int *h) {
     XGlyphInfo ext;
 
     if (!font || !text)
