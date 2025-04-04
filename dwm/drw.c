@@ -769,7 +769,7 @@ void drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h)
     XSync(drw->dpy, False);
 }
 
-#define FONT_CACHE_SIZE 256
+#define FONT_CACHE_SIZE 512
 
 typedef struct {
     FcChar32 codepoint; // .UTF-8
