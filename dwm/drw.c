@@ -52,19 +52,19 @@
 //     return len;
 // }
 
-static inline __m256i push_last_byte_of_a_to_b(__m256i a, __m256i b) {
+inline __m256i push_last_byte_of_a_to_b(__m256i a, __m256i b) {
     return _mm256_alignr_epi8(b, _mm256_permute2x128_si256(a, b, 0x21), 15);
 }
 
-static inline __m256i push_last_2bytes_of_a_to_b(__m256i a, __m256i b) {
+inline __m256i push_last_2bytes_of_a_to_b(__m256i a, __m256i b) {
     return _mm256_alignr_epi8(b, _mm256_permute2x128_si256(a, b, 0x21), 14);
 }
 
-static inline __m256i push_last_3bytes_of_a_to_b(__m256i a, __m256i b) {
+inline __m256i push_last_3bytes_of_a_to_b(__m256i a, __m256i b) {
     return _mm256_alignr_epi8(b, _mm256_permute2x128_si256(a, b, 0x21), 13);
 }
 
-static inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long *cps) {
+inline int utf8_decode_batch_avx2(const unsigned char *s, int *lens, long *cps) {
     __m256i input = _mm256_loadu_si256((const __m256i *)s);
 
     __m256i hi_nibbles = _mm256_srli_epi16(input, 4);
