@@ -7,6 +7,8 @@
 #include <X11/Xft/Xft.h>
 #include <stdint.h>
 
+#include <smmintrin.h>
+
 #include <stdint.h>
 #include <x86intrin.h>
 #include <immintrin.h>
@@ -769,7 +771,7 @@ void drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h)
     XSync(drw->dpy, False);
 }
 
-#define FONT_CACHE_SIZE 64
+#define FONT_CACHE_SIZE 256
 
 typedef struct {
     FcChar32 codepoint; // .UTF-8
@@ -818,34 +820,72 @@ void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
     reset_font_cache();
 }
 
-static Fnt *find_font_for_char(Drw *drw, FcChar32 codepoint) {
-    if (!drw || !drw->fonts) {
-        return NULL;
-    }
-    // check our trashbank
-    //
-    unsigned int hash = (unsigned int)codepoint;
-    hash = ((hash >> 16) ^ hash) * 0x21F0AAAD;
-    hash = ((hash >> 15) ^ hash) * 0xD35A2D97;
-    unsigned int index = hash % FONT_CACHE_SIZE;
-    for (int i = 0; i < FONT_CACHE_SIZE; i++) {
-        if (font_cache[i].codepoint == codepoint && font_cache[i].font) {
-            return font_cache[i].font;
-        }
-    }
+static inline uint32_t crc32_hash(FcChar32 codepoint) {
+    return _mm_crc32_u32(0, codepoint);
+}
 
-    // find right font
+// static Fnt *find_font_for_char(Drw *drw, FcChar32 codepoint) {
+//     if (!drw || !drw->fonts) {
+//         return NULL;
+//     }
+//     // check our trashbank
+//     //
+//     // unsigned int hash = (unsigned int)codepoint;
+//     // hash = ((hash >> 16) ^ hash) * 0x21F0AAAD;
+//     // hash = ((hash >> 15) ^ hash) * 0xD35A2D97;
+//     // unsigned int index = hash % FONT_CACHE_SIZE;
+//     //
+//     // uint32_t hash = crc32_hash(codepoint) % FONT_CACHE_SIZE;
+//     // if (font_cache[hash].codepoint == codepoint) {
+//     //     return font_cache[hash].font;
+//     // }
+//     // for (int i = 0; i < FONT_CACHE_SIZE; i++) {
+//     //     if (font_cache[i].codepoint == codepoint && font_cache[i].font) {
+//     //         return font_cache[i].font;
+//     //     }
+//     // }
+
+//     // find right font
+//     // for (Fnt *curfont = drw->fonts; curfont; curfont = curfont->next) {
+//     //     if (XftCharExists(drw->dpy, curfont->xfont, codepoint)) {
+//     //         // to cache
+//     //         static int cache_index = 0;
+//     //         font_cache[cache_index].codepoint = codepoint;
+//     //         font_cache[cache_index].font = curfont;
+//     //         cache_index = (cache_index + 1) % FONT_CACHE_SIZE;
+//     //         return curfont;
+//     //     }
+//     // }
+
+//     uint32_t hash = crc32_hash(codepoint) % FONT_CACHE_SIZE;
+//     if (font_cache[hash].codepoint == codepoint) {
+//         return font_cache[hash].font;
+//     }
+//     for (Fnt *curfont = drw->fonts; curfont; curfont = curfont->next) {
+//         if (XftCharExists(drw->dpy, curfont->xfont, codepoint)) {
+//             font_cache[hash].codepoint = codepoint;
+//             font_cache[hash].font = curfont;
+//             return curfont;
+//         }
+//     }
+//     return drw->fonts;
+// }
+
+static Fnt *find_font_for_char(Drw *drw, FcChar32 codepoint) {
+    if (!drw || !drw->fonts)
+        return NULL;
+    uint32_t hash = crc32_hash(codepoint) % FONT_CACHE_SIZE;
+    if (font_cache[hash].codepoint == codepoint) {
+        return font_cache[hash].font;
+    }
     for (Fnt *curfont = drw->fonts; curfont; curfont = curfont->next) {
         if (XftCharExists(drw->dpy, curfont->xfont, codepoint)) {
-            // to cache
-            static int cache_index = 0;
-            font_cache[cache_index].codepoint = codepoint;
-            font_cache[cache_index].font = curfont;
-            cache_index = (cache_index + 1) % FONT_CACHE_SIZE;
+            font_cache[hash].codepoint = codepoint;
+            font_cache[hash].font = curfont;
             return curfont;
         }
     }
-    return drw->fonts; // first font fallback bro
+    return drw->fonts;
 }
 
 unsigned int drw_fontset_getwidth_fast(Drw *drw, const char *text) {
