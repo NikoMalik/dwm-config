@@ -769,7 +769,7 @@ void drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h)
     XSync(drw->dpy, False);
 }
 
-#define FONT_CACHE_SIZE 512
+#define FONT_CACHE_SIZE 64
 
 typedef struct {
     FcChar32 codepoint; // .UTF-8
@@ -808,7 +808,7 @@ void drw_setfontset(Drw *drw, Fnt *set) {
 // }
 
 void drw_resize(Drw *drw, unsigned int w, unsigned int h) {
-    if (!drw || (drw->w == w && drw->h == h))
+    if (!drw)
         return;
     drw->w = w;
     drw->h = h;
@@ -823,6 +823,11 @@ static Fnt *find_font_for_char(Drw *drw, FcChar32 codepoint) {
         return NULL;
     }
     // check our trashbank
+    //
+    unsigned int hash = (unsigned int)codepoint;
+    hash = ((hash >> 16) ^ hash) * 0x21F0AAAD;
+    hash = ((hash >> 15) ^ hash) * 0xD35A2D97;
+    unsigned int index = hash % FONT_CACHE_SIZE;
     for (int i = 0; i < FONT_CACHE_SIZE; i++) {
         if (font_cache[i].codepoint == codepoint && font_cache[i].font) {
             return font_cache[i].font;
