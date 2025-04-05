@@ -46,7 +46,6 @@
 
 #include "drw.h"
 #include "util.h"
-#include "mimalloc.h"
 
 /* macros */
 #define BUTTONMASK (ButtonPressMask | ButtonReleaseMask)
