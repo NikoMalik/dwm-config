@@ -22,7 +22,7 @@ static const Block blocks[] = {
     {" ", "sensors | awk '/Core 0/ {print $3}'", 10, 0},
 
     {"[MEM] ",  "awk '/MemTotal/ {total=$2} /MemAvailable/ {avail=$2} END {printf(\"%.0f%%\", avail/total * 100)}' /proc/meminfo", 60, 0},
-    {" ",      "date '+%d.%m'",                                                                              60, 0},
+    {" ",      "date '+%d.%m (%a)'",                                                                         60, 0},
     {" ",      "date '+%H:%M  '",                                                                            5, 0},
 };
 
