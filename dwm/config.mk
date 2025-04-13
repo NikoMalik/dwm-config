@@ -57,7 +57,7 @@ LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}  -L${JEMALLOC_LIB} -lje
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
 #mimmallocflags
 #CFLAGS   = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
-CFLAGS   = -std=c99   -march=native -O3 -pedantic -Wall   ${INCS} ${CPPFLAGS}  -finline-functions -finline-small-functions
+CFLAGS   = -std=c99   -march=native -O2 -pedantic -Wall   ${INCS} ${CPPFLAGS}  -finline-functions -finline-small-functions
 LDFLAGS  = ${LIBS}
 # -rpath=${MIMALLOC_LIB}
 

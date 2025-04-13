@@ -147,7 +147,9 @@ static const char *dmenucmd[] = {
 
     NULL 
 };
-static const char *termcmd[]  = { "alacritty", NULL };
+// static const char *termcmd[]  = { "alacritty", NULL };
+static const char *termcmd[]  = { "st", NULL };
+
 static const char *flameshot[] = { "flameshot", "gui", NULL };
 
 static const Key keys[] = {
