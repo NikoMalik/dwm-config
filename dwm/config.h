@@ -36,12 +36,20 @@ static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
 
 
 
+// static const char col_background[]  = "#181818";  /* background */
+// static const char col_foreground[]  = "#e4e4ef";  /* text */
+// static const char col_highlight[]   = "#282828";  /* another background */
+// static const char col_accent[]      = "#f43841";  /* red accent */
+// static const char col_yellow[]      = "#ffdd33";  /* yellow  */
+// static const char col_green[]       = "#73c936";  /* green */
+
+
 static const char col_background[]  = "#181818";  /* background */
 static const char col_foreground[]  = "#e4e4ef";  /* text */
-static const char col_highlight[]   = "#282828";  /* another background */
-static const char col_accent[]      = "#f43841";  /* red accent */
-static const char col_yellow[]      = "#ffdd33";  /* yellow  */
-static const char col_green[]       = "#73c936";  /* green */
+static const char col_highlight[]   = "#52494E";  /* bright black for subtle highlights */
+static const char col_accent[]      = "#D4D4D4";  /* red accent */
+static const char col_white_selection[] =  "#2d4f67";
+
 
 
 static const char col_debkg[]       = "#1a1b26";
@@ -53,13 +61,21 @@ static const char col_acbor[]       = "#2ac3de";
 static const char col_sacbor[]      = "#74c7ec";
 static const char col_sdebor[]      = "#313244";
 
+// static const char *colors[][3]      = {
+//     /*               fg             bg             border   */
+//     // [SchemeNorm] = { col_foreground, col_background, col_highlight },
+//     // [SchemeSel]  = { col_background, col_yellow,     col_foreground },
+
+//        [SchemeNorm] = { col_defor, col_debkg,  col_debor },
+// 	     [SchemeSel]  = { col_foreground, col_acbkg,  col_acbor  },
+// };
+
+
+
 static const char *colors[][3]      = {
     /*               fg             bg             border   */
-    // [SchemeNorm] = { col_foreground, col_background, col_highlight },
-    // [SchemeSel]  = { col_background, col_yellow,     col_foreground },
-
-       [SchemeNorm] = { col_defor, col_debkg,  col_debor },
-	     [SchemeSel]  = { col_foreground, col_acbkg,  col_acbor  },
+    [SchemeNorm] = { col_foreground, col_background, col_highlight },
+    [SchemeSel]  = { col_background, col_accent,     col_white_selection },
 };
 
 
@@ -137,7 +153,8 @@ static const char *dmenucmd[] = {
     "-fn", dmenufont, 
     "-nb", col_background, 
     "-nf", col_foreground, 
-    "-sb", col_acbkg,
+    // "-sb", col_acbkg,
+    "-sb", col_accent,
     "-sf", col_background, 
    
     // "-l", "10",
@@ -148,7 +165,7 @@ static const char *dmenucmd[] = {
     NULL 
 };
 // static const char *termcmd[]  = { "alacritty", NULL };
-static const char *termcmd[]  = { "st", NULL };
+static const char *termcmd[] = { "st", NULL }; 
 
 static const char *flameshot[] = { "flameshot", "gui", NULL };
 
