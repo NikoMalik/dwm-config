@@ -39,26 +39,47 @@ static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
 
 
 
-static const char col_background[]  = "#000000";  /* main background, Vintage background */
-static const char col_foreground[]  = "#e5e5e5";  /* main text, Vintage bright white */
-static const char col_highlight[]   = "#000000";  /* secondary background, same as main background */
-static const char col_accent[]      = "#778e61";  /* active text, same as main text (white) */
-static const char col_white_selection[] = "#778e61"; /* selection, Vintage ui.text.focus (active green) */
-static const char col_debkg[]       = "#778e61";  /* panel background, Vintage green */
-static const char col_acbkg[]       = "#000000";  /* active panel background, Vintage ui.text.focus */
-static const char col_acfor[]       = "#e5e5e5";  /* active text, same as main text (white) */
-static const char col_debor[]       = "#e5e5e5";  /* default border, Vintage green */
-static const char col_sacbor[]      = "#e5e5e5";  /* selected border, Vintage ui.text.focus */
+// static const char col_background[]  = "#000000";  /* main background, Vintage background */
+// static const char col_foreground[]  = "#e5e5e5";  /* main text, Vintage bright white */
+// static const char col_highlight[]   = "#000000";  /* secondary background, same as main background */
+// static const char col_accent[]      = "#778e61";  /* active text, same as main text (white) */
+// static const char col_white_selection[] = "#778e61"; /* selection, Vintage ui.text.focus (active green) */
+// static const char col_debkg[]       = "#778e61";  /* panel background, Vintage green */
+// static const char col_acbkg[]       = "#000000";  /* active panel background, Vintage ui.text.focus */
+// static const char col_acfor[]       = "#e5e5e5";  /* active text, same as main text (white) */
+// static const char col_debor[]       = "#e5e5e5";  /* default border, Vintage green */
+// static const char col_sacbor[]      = "#e5e5e5";  /* selected border, Vintage ui.text.focus */
 
 
 
+static const char col_black[]        = "#000000"; // background
+static const char col_red[]          = "#ff5774";
+static const char col_green[]        = "#6ae98a";
+static const char col_yellow[]       = "#ffe099";
+static const char col_blue[]         = "#ff7a99";
+static const char col_magenta[]      = "#e0b2a5";
+static const char col_cyan[]         = "#efdaa1";
+static const char col_white[]        = "#bfbfbf"; // foreground
+
+static const char col_bblack[]       = "#4d4d4d";
+static const char col_bred[]         = "#ff6580";
+static const char col_bgreen[]       = "#70f893";
+static const char col_byellow[]      = "#ffe6ad";
+static const char col_bblue[]        = "#ff8ba6";
+static const char col_bmagenta[]     = "#e8c4bb";
+static const char col_bcyan[]        = "#ffe8ac";
+static const char col_bwhite[]       = "#e6e6e6";
+
+static const char col_cursor[]       = "#ff7a99"; // cursor (regular4)
+static const char col_currev[]       = "#efdaa1"; // reverse-cursor (regular6)
+static const char col_bg[]           = "#000000"; // background
+static const char col_fg[]           = "#bfbfbf"; // text
 
 
-
-static const char *colors[][3]      = {
-    /*               fg             bg             border   */
-    [SchemeNorm] = { col_foreground, col_background, col_debor },
-    [SchemeSel]  = { col_accent,     col_acbkg,      col_sacbor },
+static const char *colors[][3] = {
+    /*               fg           bg          border  */
+    [SchemeNorm] = { col_fg,      col_bg,     col_bblack },
+    [SchemeSel]  = { col_cursor,  col_black,  col_blue   },
 };
 
 /* tagging */
@@ -132,15 +153,17 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 
 
-static const char *dmenucmd[] = { 
-    "dmenu_run", "-m", dmenumon, 
-    "-fn", dmenufont, 
-    "-nb", col_background,  /* #000000 */
-    "-nf", col_foreground,  /* #cc8c3c */
-    "-sb", col_background,   /* #747575 */
-    "-sf", col_accent,      /* #D08C60 */
-    NULL 
+static const char *dmenucmd[] = {
+    "dmenu_run",
+      "-m", dmenumon,
+      "-fn", dmenufont,
+      "-nb", col_bg,        /* #000000 */
+      "-nf", col_fg,        /* #bfbfbf */
+      "-sb", col_cursor,    /* #ff7a99 */
+      "-sf", col_fg,        /* #bfbfbf */
+    NULL
 };
+
 // static const char *termcmd[]  = { "alacritty", NULL };
 static const char *termcmd[] = { "st", NULL }; 
 
