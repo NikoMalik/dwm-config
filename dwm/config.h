@@ -30,12 +30,12 @@ static const int vertpad = 0 ; /* vertical padding of bar */
 static const int sidepad =0 ; /* horizontal padding of bar */
 
 static const char *fonts[]          = {
-	 "Maple Mono NF:size=12:style=Regular",
-	 "Font Awesome 6 Free Solid:size=12",
-	 "Noto Sans:size=12"
+	 "DepartureMono Nerd Font:size=11:style=Regular",
+	 "Font Awesome 6 Free Solid:size=11",
+	 "Noto Sans:size=11"
 
 	  };
-static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
+static const char dmenufont[]       = "DepartureMono Nerd Font:size=11:style=Regular";
 
 
 
@@ -102,7 +102,7 @@ static const Rule rules[] = {
 
 	RULE(.class    = "TelegramDesktop", .tags = 1 << 4)
 
-	RULE(.class = "Gimp", .tags = 1 << 4)
+	RULE(.class = "Gimp", .tags = 1 << 6)
   RULE(.class = "Firefox", .tags = 1 << 1)
 };
 
