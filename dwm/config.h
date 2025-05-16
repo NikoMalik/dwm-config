@@ -24,44 +24,63 @@ static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 30;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const int vertpad = 10 ; /* vertical padding of bar */
-static const int sidepad =10 ; /* horizontal padding of bar */
+// static const int vertpad = 10 ; /* vertical padding of bar */
+// static const int sidepad =10 ; /* horizontal padding of bar */
+static const int vertpad = 0 ; /* vertical padding of bar */
+static const int sidepad =0 ; /* horizontal padding of bar */
+
 static const char *fonts[]          = {
-	 "Maple Mono NF:size=12:style=Regular",
-	 "Font Awesome 6 Free Solid:size=12",
-	 "Noto Sans:size=12"
+	 "DepartureMono Nerd Font:size=11:style=Regular",
+	 "Font Awesome 6 Free Solid:size=11",
+	 "Noto Sans:size=11"
 
 	  };
-static const char dmenufont[]       = "Maple Mono NF:size=12:style=Regular";
+static const char dmenufont[]       = "DepartureMono Nerd Font:size=11:style=Regular";
 
 
 
-static const char col_background[]  = "#181818";  /* background */
-static const char col_foreground[]  = "#e4e4ef";  /* text */
-static const char col_highlight[]   = "#282828";  /* another background */
-static const char col_accent[]      = "#f43841";  /* red accent */
-static const char col_yellow[]      = "#ffdd33";  /* yellow  */
-static const char col_green[]       = "#73c936";  /* green */
+// static const char col_background[]  = "#000000";  /* main background, Vintage background */
+// static const char col_foreground[]  = "#e5e5e5";  /* main text, Vintage bright white */
+// static const char col_highlight[]   = "#000000";  /* secondary background, same as main background */
+// static const char col_accent[]      = "#778e61";  /* active text, same as main text (white) */
+// static const char col_white_selection[] = "#778e61"; /* selection, Vintage ui.text.focus (active green) */
+// static const char col_debkg[]       = "#778e61";  /* panel background, Vintage green */
+// static const char col_acbkg[]       = "#000000";  /* active panel background, Vintage ui.text.focus */
+// static const char col_acfor[]       = "#e5e5e5";  /* active text, same as main text (white) */
+// static const char col_debor[]       = "#e5e5e5";  /* default border, Vintage green */
+// static const char col_sacbor[]      = "#e5e5e5";  /* selected border, Vintage ui.text.focus */
 
 
-static const char col_debkg[]       = "#1a1b26";
-static const char col_acbkg[]       = "#414868";
-static const char col_acfor[]       = "#c0caf5";
-static const char col_defor[]       = "#a9b1d6";
-static const char col_debor[]       = "#24283b";
-static const char col_acbor[]       = "#2ac3de";
-static const char col_sacbor[]      = "#74c7ec";
-static const char col_sdebor[]      = "#313244";
 
-static const char *colors[][3]      = {
-    /*               fg             bg             border   */
-    // [SchemeNorm] = { col_foreground, col_background, col_highlight },
-    // [SchemeSel]  = { col_background, col_yellow,     col_foreground },
+static const char col_black[]        = "#000000"; // background
+static const char col_red[]          = "#ff5774";
+static const char col_green[]        = "#6ae98a";
+static const char col_yellow[]       = "#ffe099";
+static const char col_blue[]         = "#ff7a99";
+static const char col_magenta[]      = "#e0b2a5";
+static const char col_cyan[]         = "#efdaa1";
+static const char col_white[]        = "#bfbfbf"; // foreground
 
-       [SchemeNorm] = { col_defor, col_debkg,  col_debor },
-	     [SchemeSel]  = { col_foreground, col_acbkg,  col_acbor  },
+static const char col_bblack[]       = "#4d4d4d";
+static const char col_bred[]         = "#ff6580";
+static const char col_bgreen[]       = "#70f893";
+static const char col_byellow[]      = "#ffe6ad";
+static const char col_bblue[]        = "#ff8ba6";
+static const char col_bmagenta[]     = "#e8c4bb";
+static const char col_bcyan[]        = "#ffe8ac";
+static const char col_bwhite[]       = "#e6e6e6";
+
+static const char col_cursor[]       = "#ff7a99"; // cursor (regular4)
+static const char col_currev[]       = "#efdaa1"; // reverse-cursor (regular6)
+static const char col_bg[]           = "#000000"; // background
+static const char col_fg[]           = "#bfbfbf"; // text
+
+
+static const char *colors[][3] = {
+    /*               fg           bg          border  */
+    [SchemeNorm] = { col_fg,      col_bg,     col_bblack },
+    [SchemeSel]  = { col_cursor,  col_black,  col_blue   },
 };
-
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
@@ -83,8 +102,8 @@ static const Rule rules[] = {
 
 	RULE(.class    = "TelegramDesktop", .tags = 1 << 4)
 
-	RULE(.class = "Gimp", .tags = 1 << 4)
-  RULE(.class = "Firefox", .tags = 1 << 8)
+	RULE(.class = "Gimp", .tags = 1 << 6)
+  RULE(.class = "Firefox", .tags = 1 << 1)
 };
 
 /* layout(s) */
@@ -99,7 +118,7 @@ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen win
 static const Layout layouts[] = {
 	/* symbol     arrange function */
 	{ "[]=",      tile },    /* first entry is default */
-	// { "><>",      NULL },    /* no layout function means floating behavior */
+	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
 
 	{ "[@]",      spiral },
@@ -113,7 +132,7 @@ static const Layout layouts[] = {
 	{ ":::",      gaplessgrid },
 	{ "|M|",      centeredmaster },
 	{ ">M>",      centeredfloatingmaster },
-	{ "><>",      NULL },    /* no layout function means floating behavior */
+	// { "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
 
@@ -132,23 +151,21 @@ static const Layout layouts[] = {
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { 
-    "dmenu_run", "-m", dmenumon, 
-    "-fn", dmenufont, 
-    "-nb", col_background, 
-    "-nf", col_foreground, 
-    "-sb", col_acbkg,
-    "-sf", col_background, 
-   
-    // "-l", "10",
-    // "-c",
-    //
-    //center patch for dmenu
 
-    NULL 
+
+static const char *dmenucmd[] = {
+    "dmenu_run",
+      "-m", dmenumon,
+      "-fn", dmenufont,
+      "-nb", col_bg,        /* #000000 */
+      "-nf", col_fg,        /* #bfbfbf */
+      "-sb", col_cursor,    /* #ff7a99 */
+      "-sf", col_fg,        /* #bfbfbf */
+    NULL
 };
+
 // static const char *termcmd[]  = { "alacritty", NULL };
-static const char *termcmd[]  = { "st", NULL };
+static const char *termcmd[] = { "st", NULL }; 
 
 static const char *flameshot[] = { "flameshot", "gui", NULL };
 
@@ -162,7 +179,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
 	{ MODKEY,                       XK_i,      incnmaster,     {.i = +1 } },
-	{ MODKEY,                       XK_d,      incnmaster,     {.i = -1 } },
+	{ MODKEY|ShiftMask,             XK_d,      incnmaster,     {.i = -1 } },
 	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05} },
 	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05} },
 	{ MODKEY,                       XK_Return, zoom,           {0} },
@@ -171,6 +188,17 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
 	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
+	{ MODKEY,                       XK_s,      setlayout,      {.v = &layouts[3]} },  /* spiral */
+  { MODKEY,                       XK_d,      setlayout,      {.v = &layouts[4]} },  /* dwindle */
+  { MODKEY,                       XK_e,      setlayout,      {.v = &layouts[5]} },  /* deck       (dEck)      */
+  { MODKEY,                       XK_r,      setlayout,     {.v = &layouts[6]} },  /* bstack     (sTack)     */
+  { MODKEY,                       XK_v,      setlayout,     {.v = &layouts[7]} },  /* bstackhoriz(vertiCal) */
+  { MODKEY,                       XK_g,      setlayout,     {.v = &layouts[8]} },  /* grid      (Grid)      */
+  { MODKEY,                       XK_n,      setlayout,     {.v = &layouts[9]} },  /* nrowgrid (Number of rows) */
+  { MODKEY,                       XK_x,      setlayout,     {.v = &layouts[10]}},  /* horizgrid(eXplode horiz.) */
+  { MODKEY,                       XK_y,      setlayout,     {.v = &layouts[11]}},  /* gaplessgrid (emptY?)    */
+  { MODKEY,                       XK_c,      setlayout,     {.v = &layouts[12]}},  /* centeredmaster (Center) */
+  { MODKEY,                       XK_z,      setlayout,     {.v = &layouts[13]}},  /* centeredfloatingmaster (cZ = floZy?) */
 	{ MODKEY,                       XK_space,  setlayout,      {0} },
 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
