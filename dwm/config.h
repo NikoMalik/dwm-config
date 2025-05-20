@@ -30,12 +30,12 @@ static const int vertpad = 0 ; /* vertical padding of bar */
 static const int sidepad =0 ; /* horizontal padding of bar */
 
 static const char *fonts[]          = {
-	 "DepartureMono Nerd Font:size=10:style=Regular",
+	 "Fira Code:style=Regular:pixelsize=11:antialias=true:autohint=true",
 	 "Font Awesome 6 Free Solid:size=10",
 	 "Noto Sans:size=10"
 
 	  };
-static const char dmenufont[]       = "DepartureMono Nerd Font:size=10:style=Regular";
+static const char dmenufont[]       = "Fira Code:style=Regular:pixelsize=11:antialias=true:autohint=true";
 
 
 
@@ -164,8 +164,8 @@ static const char *dmenucmd[] = {
     NULL
 };
 
-// static const char *termcmd[]  = { "alacritty", NULL };
-static const char *termcmd[] = { "st", NULL }; 
+static const char *termcmd[]  = { "alacritty", NULL };
+// static const char *termcmd[] = { "st", NULL }; 
 
 static const char *flameshot[] = { "flameshot", "gui", NULL };
 
