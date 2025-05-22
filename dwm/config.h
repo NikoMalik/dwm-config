@@ -30,12 +30,12 @@ static const int vertpad = 0 ; /* vertical padding of bar */
 static const int sidepad =0 ; /* horizontal padding of bar */
 
 static const char *fonts[]          = {
-	 "DepartureMono Nerd Font:size=11:style=Regular",
-	 "Font Awesome 6 Free Solid:size=11",
-	 "Noto Sans:size=11"
+	 "DepartureMono Nerd Font:size=10:style=Regular",
+	 "Font Awesome 6 Free Solid:size=10",
+	 "Noto Sans:size=10"
 
 	  };
-static const char dmenufont[]       = "DepartureMono Nerd Font:size=11:style=Regular";
+static const char dmenufont[]       = "DepartureMono Nerd Font:size=10:style=Regular";
 
 
 
