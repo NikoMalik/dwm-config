@@ -17,7 +17,7 @@ MIMALLOC_LIB = ./include/mimalloc/out/release
 
 
 
-JEMALLOC_LIB = ./include/jemalloc/lib/libjemalloc.so
+JEMALLOC_LIB = ./include/jemalloc/lib/
 JEMALLOC_INC = ./include/jemalloc/include
 
 
@@ -58,7 +58,7 @@ CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L -DVERSION=\"${VE
 #mimmallocflags
 #CFLAGS   = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
 CFLAGS   = -std=c99   -march=native -O2 -pedantic -Wall   ${INCS} ${CPPFLAGS}  -finline-functions -finline-small-functions
-LDFLAGS  = ${LIBS}
+LDFLAGS  = ${LIBS}  
 # -rpath=${MIMALLOC_LIB}
 
 # Solaris
