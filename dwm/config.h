@@ -84,10 +84,16 @@ static const char col_bwhite[] = "#c5c9c5";   /* bright white */
 static const char col_cursor[] = "#ffa066";   /* indexed color 16 */
 static const char col_currev[] = "#ff5d62";   /* indexed color 17 */
 
+// static const char *colors[][3] = {
+//     /*               fg           bg          border  */
+//     [SchemeNorm] = {col_fg, col_bg, col_black},   /* normal: fg=#c5c9c5, bg=#181616, border=#0d0c0c */
+//     [SchemeSel] = {col_white, col_bg, col_bblue}, /* selected: fg=#C8C093, bg=#181616, border=#7FB4CA */
+// };
+
 static const char *colors[][3] = {
     /*               fg           bg          border  */
-    [SchemeNorm] = {col_fg, col_bg, col_black},   /* normal: fg=#c5c9c5, bg=#181616, border=#0d0c0c */
-    [SchemeSel] = {col_white, col_bg, col_bblue}, /* selected: fg=#C8C093, bg=#181616, border=#7FB4CA */
+    [SchemeNorm] = {col_fg, col_bg, col_black},      /* normal: fg=#c5c9c5, bg=#181616, border=#0d0c0c */
+    [SchemeSel] = {col_white, col_bblue, col_bblue}, /* selected: fg=#C8C093, bg=#7FB4CA, border=#7FB4CA */
 };
 
 /* tagging */
